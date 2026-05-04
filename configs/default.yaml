@@ -1,0 +1,100 @@
+seed: 42
+
+general:
+  device: auto
+  num_workers: 8       # RTX Pro 4500 pod: 32 vCPU → 8 workers aman
+  pin_memory: true
+
+paths:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  splits_dir: data/splits
+  checkpoint_dir: checkpoints
+  prediction_dir: data/predictions
+
+audio:
+  sample_rate: 22050
+  mono: true
+  n_fft: 2048
+  hop_length: 256
+  win_length: 2048
+  n_mels: 128
+  fmin: 30
+  fmax: 11025
+  top_db: 80
+
+dataset:
+  context_frames: 256
+  train_stride: 256
+  eval_stride: 256
+  split_ratio:
+    train: 0.7
+    val: 0.15
+    test: 0.15
+  negative_sample_ratio: 0.30   # BALANCED: 0.15 terlalu sedikit, 0.5 terlalu banyak → 0.30 cukup untuk belajar negatif tanpa suppress recall
+
+midi:
+  ticks_per_beat_default: 480
+  velocity_threshold: 1
+  lane_strategy: range
+  num_lanes: 4
+  min_pitch: 21
+  max_pitch: 108
+  note_type_from_duration: false
+  hold_threshold_ms: 999999
+
+model:
+  input_mels: 128
+  cnn_channels: [32, 64, 128]
+  kernel_size: 3
+  d_model: 256                  # NAIK dari 128 → kapasitas lebih besar untuk decision boundary yang presisi
+  num_heads: 8                  # NAIK dari 4 → lebih banyak attention head (d_model/num_heads = 32)
+  num_layers: 4                 # NAIK dari 2 → transformer lebih dalam untuk diskriminasi lebih tajam
+  ff_dim: 512                   # NAIK sesuai d_model
+  ff_mult: 4                    # NAIK dari 2 → feedforward lebih lebar
+  dropout: 0.15                 # TURUN dari 0.2 → model lebih besar butuh dropout lebih sedikit
+  max_seq_len: 2048
+  num_lanes: 4
+  predict_note_type: false
+
+train:
+  seed: 42
+  batch_size: 64                # NAIK dari 32 → RTX Pro 4500 32GB VRAM, bisa batch 64 tanpa masalah
+  num_workers: 8                # NAIK dari 2 → match general.num_workers (32 vCPU)
+  epochs: 20
+  lr: 0.0003                    # TURUN dari 0.0005 → konvergensi lebih halus untuk model besar
+  weight_decay: 0.02            # NAIK dari 0.01 → regularisasi lebih kuat → kurangi overfitting ke false positive
+  warmup_epochs: 5
+  min_lr_ratio: 0.01
+  event_loss_weight: 1.0
+  lane_loss_weight: 0.5
+  early_stopping_patience: 15
+  validate_every: 0             # 0 = skip validasi (hemat waktu & biaya RunPod), best.pt disimpan di epoch terakhir
+  monitor_metric: f1            # Tetap F1, target > 0.7
+  device: auto
+  amp: true
+  event_positive_weight: auto
+  grad_clip: 1.0
+  label_smoothing: 0.05         # TURUN dari 0.1 → prediksi lebih tajam (less smoothing = more confident boundaries)
+  use_focal_loss: true
+  focal_alpha: 0.65             # BALANCED: 0.80 terlalu recall-heavy, 0.50 terlalu precision-heavy → 0.65 sweet spot
+  focal_gamma: 2.0              # REVERT ke 2.0 → gamma 3.0 terlalu agresif, membunuh recall
+
+eval:
+  event_threshold: 0.42         # BALANCED: 0.35 terlalu rendah (P=0.42), 0.50 terlalu tinggi (R=0.54) → 0.42 sweet spot
+
+postprocess:
+  event_threshold: 0.60         # EASY MODE: naikkan dari 0.42 → hanya note confidence tinggi
+  min_gap_ms: 200               # EASY MODE: naikkan dari 95 → note lebih renggang
+  same_lane_min_gap_ms: 250     # EASY MODE: naikkan dari 130 → lebih mudah di lane yang sama
+  snap_to_onsets: true
+  onset_snap_tolerance_ms: 30
+  snap_to_beats: true
+  beat_snap_tolerance_ms: 40
+  max_density_notes_per_second: 7   # EASY MODE: turunkan dari 7 → maks 3 notes/detik
+
+# Augmentasi telah dihapus — 1000 lagu asli sudah cukup untuk training.
+
+inference:
+  chunk_frames: 512
+  chunk_overlap: 128

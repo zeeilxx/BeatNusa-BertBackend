@@ -1,0 +1,100 @@
+seed: 42
+
+general:
+  device: auto
+  num_workers: 2 # RTX 3050 Laptop: 16GB RAM → 2 workers aman
+  pin_memory: true
+
+paths:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  splits_dir: data/splits
+  checkpoint_dir: checkpoints
+  prediction_dir: data/predictions
+
+audio:
+  sample_rate: 22050
+  mono: true
+  n_fft: 2048
+  hop_length: 256
+  win_length: 2048
+  n_mels: 128
+  fmin: 30
+  fmax: 11025
+  top_db: 80
+
+dataset:
+  context_frames: 256
+  train_stride: 256
+  eval_stride: 256
+  split_ratio:
+    train: 0.7
+    val: 0.15
+    test: 0.15
+  negative_sample_ratio: 0.30 # BALANCED: cukup untuk belajar negatif tanpa suppress recall
+
+midi:
+  ticks_per_beat_default: 480
+  velocity_threshold: 1
+  lane_strategy: range
+  num_lanes: 4
+  min_pitch: 21
+  max_pitch: 108
+  note_type_from_duration: false
+  hold_threshold_ms: 999999
+
+model:
+  input_mels: 128
+  cnn_channels: [32, 64, 128]
+  kernel_size: 3
+  d_model: 128 # Kecilkan dari 256 → fit di 4GB VRAM RTX 3050
+  num_heads: 4 # 128/4 = 32 per head
+  num_layers: 2 # Kecilkan dari 4 → hemat VRAM
+  ff_dim: 256
+  ff_mult: 2 # Kecilkan dari 4 → hemat VRAM
+  dropout: 0.2 # Naikkan dari 0.15 → model kecil butuh lebih banyak regularisasi
+  max_seq_len: 2048
+  num_lanes: 4
+  predict_note_type: false
+
+train:
+  seed: 42
+  batch_size: 16 # 4GB VRAM → batch 16 adalah batas aman dengan AMP
+  num_workers: 2 # Match general.num_workers
+  epochs: 30 # 20 epoch saja
+  lr: 0.0003 # Tetap sama → konvergensi halus
+  weight_decay: 0.02 # Tetap → regularisasi kuat untuk precision
+  warmup_epochs: 5
+  min_lr_ratio: 0.01
+  event_loss_weight: 1.0
+  lane_loss_weight: 0.5
+  early_stopping_patience: 999 # Disabled — jalankan semua 20 epoch
+  validate_every: 5
+  monitor_metric: f1 # Tetap F1, target > 0.7
+  device: auto
+  amp: true # WAJIB untuk 4GB VRAM — training dalam fp16
+  event_positive_weight: auto
+  grad_clip: 1.0
+  label_smoothing: 0.05 # Tetap → prediksi tajam
+  use_focal_loss: true
+  focal_alpha: 0.65 # BALANCED: sweet spot antara recall (0.80) dan precision (0.50)
+  focal_gamma: 2.0 # Revert ke 2.0 → gamma 3.0 terlalu membunuh recall
+
+eval:
+  event_threshold: 0.42 # BALANCED: sweet spot antara 0.35 dan 0.50
+
+postprocess:
+  event_threshold: 0.60 # EASY MODE: naikkan dari 0.42 → hanya note confidence tinggi yang lolos
+  min_gap_ms: 200        # EASY MODE: naikkan dari 95 → note lebih renggang
+  same_lane_min_gap_ms: 250  # EASY MODE: naikkan dari 130 → lebih mudah di lane yang sama
+  snap_to_onsets: true
+  onset_snap_tolerance_ms: 30
+  snap_to_beats: true
+  beat_snap_tolerance_ms: 40
+  max_density_notes_per_second: 3  # EASY MODE: turunkan dari 7 → maks 3 notes/detik
+
+# Augmentasi telah dihapus — 1000 lagu asli sudah cukup untuk training.
+
+inference:
+  chunk_frames: 512
+  chunk_overlap: 128
