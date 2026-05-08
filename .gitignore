@@ -15,7 +15,7 @@ checkpoints_test/
 data/
 storage/
 /*.json
-/*.txt
+*.txt
 !requirements.txt
 /*.zip
 *.ipynb_checkpoints
