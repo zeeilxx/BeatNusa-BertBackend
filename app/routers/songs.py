@@ -1,11 +1,11 @@
 """
 Song-related API endpoints.
-Handles upload, listing, and status checking.
+Handles upload (async with background tasks), listing, and status checking.
 """
 
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,7 +18,7 @@ from app.schemas.song import (
     SongUploadResponse,
 )
 from app.services.audio_service import AudioValidationError
-from app.services.beatmap_service import upload_and_process
+from app.services.beatmap_service import upload_initial, process_ai_background
 
 router = APIRouter(prefix="/api/songs", tags=["Songs"])
 
@@ -26,8 +26,9 @@ router = APIRouter(prefix="/api/songs", tags=["Songs"])
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # POST /api/songs/upload
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-@router.post("/upload", response_model=SongUploadResponse, status_code=201)
+@router.post("/upload", response_model=SongUploadResponse, status_code=202)
 async def upload_song(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     title: Optional[str] = Form(default=None),
     artist: Optional[str] = Form(default=None),
@@ -35,38 +36,33 @@ async def upload_song(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Upload an audio file (MP3/WAV/OGG) and trigger AI beatmap generation.
-
-    The full pipeline runs synchronously:
-    1. Validate file
-    2. Save to storage
-    3. Extract metadata
-    4. AI generates beatmap
-    5. Store everything in database
-
-    Returns the song_code for future reference.
+    Upload an audio file and trigger AI generation in the background.
+    Returns 202 Accepted immediately after file is saved.
+    Unity should then poll /status to check for completion.
     """
     try:
-        song = await upload_and_process(
+        # Step 1: Initial upload (save file & create DB record) - FAST
+        song = await upload_initial(
             file=file,
             db=db,
             title=title,
             artist=artist,
             genre=genre,
         )
+        
+        # Step 2: Queue AI processing in background - SLOW
+        background_tasks.add_task(process_ai_background, song.id)
+        
         return SongUploadResponse(
             status="success",
             song_code=song.song_code,
             title=song.title,
-            process_status=song.process_status,
-            message="Audio berhasil diupload dan beatmap telah digenerate.",
+            process_status="uploaded",
+            message="Audio berhasil diupload. Beatmap sedang digenerate di background.",
         )
 
     except AudioValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
-
-    except RuntimeError as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
     except Exception as e:
         raise HTTPException(

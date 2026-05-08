@@ -1,6 +1,7 @@
 """
 Beatmap orchestration service.
 Handles the end-to-end flow: upload → validate → store → AI → DB.
+Supports background processing to avoid timeouts on slow AI generation.
 """
 
 import json
@@ -22,9 +23,10 @@ from app.services.audio_service import (
     delete_audio_file,
 )
 from app.services.ai_service import ai_service
+from app.database import AsyncSessionLocal
 
 
-async def upload_and_process(
+async def upload_initial(
     file: UploadFile,
     db: AsyncSession,
     title: Optional[str] = None,
@@ -32,20 +34,14 @@ async def upload_and_process(
     genre: Optional[str] = None,
 ) -> Song:
     """
-    Full upload + AI generation pipeline:
+    Step 1 of the pipeline (Synchronous/Fast):
     1. Validate file format & size
     2. Save to storage
     3. Extract metadata (duration, BPM)
     4. Validate duration
     5. Insert song record (status = 'uploaded')
-    6. Update status → 'processing'
-    7. Run AI inference
-    8. Insert beatmap record
-    9. Update status → 'done'
-
-    On any error: set status → 'failed', cleanup file.
-
-    Returns the Song ORM object.
+    
+    Returns the Song ORM object to the router so it can queue the background task.
     """
     # ── Step 1: Validate ──────────────────────────────────────
     ext = await validate_upload(file)
@@ -69,7 +65,7 @@ async def upload_and_process(
 
     # ── Step 5: Insert song record ────────────────────────────
     song_code = f"SONG-{uuid.uuid4().hex[:8].upper()}"
-    song_title = title or file.filename.rsplit(".", 1)[0] if file.filename else "Untitled"
+    song_title = title or (file.filename.rsplit(".", 1)[0] if file.filename else "Untitled")
 
     song = Song(
         song_code=song_code,
@@ -89,37 +85,65 @@ async def upload_and_process(
     db.add(song)
     await db.commit()
     await db.refresh(song)
-
-    # ── Step 6: Update status → processing ────────────────────
-    song.process_status = "processing"
-    await db.commit()
-
-    # ── Step 7–9: AI generation ───────────────────────────────
-    try:
-        ai_result = ai_service.generate_beatmap(file_path)
-        beatmap_payload = _build_beatmap_json(ai_result)
-        beatmap = Beatmap(
-            song_id=song.id,
-            model_name="BeatmapBERT",
-            model_version="1.0",
-            difficulty_name="normal",
-            lane_count=ai_result["lane_count"],
-            offset_ms=ai_result["offset_ms"],
-            beatmap_json=json.dumps(beatmap_payload),
-            note_count=ai_result["note_count"],
-            generation_status="generated",
-        )
-        db.add(beatmap)
-        song.process_status = "done"
-        await db.commit()
-        await db.refresh(song)
-
-    except Exception as e:
-        song.process_status = "failed"
-        await db.commit()
-        raise RuntimeError(f"AI generation gagal: {str(e)}")
-
+    
     return song
+
+
+async def process_ai_background(song_id: int):
+    """
+    Step 2 of the pipeline (Asynchronous/Slow):
+    Runs in the background to avoid 502 Bad Gateway timeouts.
+    
+    1. Load song from DB
+    2. Update status → 'processing'
+    3. Run AI inference
+    4. Insert beatmap record
+    5. Update status → 'done'
+    """
+    async with AsyncSessionLocal() as db:
+        # 1. Load song
+        stmt = select(Song).where(Song.id == song_id)
+        result = await db.execute(stmt)
+        song = result.scalar_one_or_none()
+        
+        if not song:
+            print(f"[Background] Error: Song ID {song_id} not found.")
+            return
+
+        print(f"[Background] Memproses AI untuk: {song.title} ({song.song_code})")
+
+        # 2. Update status → processing
+        song.process_status = "processing"
+        await db.commit()
+
+        # 3. AI generation
+        try:
+            ai_result = ai_service.generate_beatmap(song.file_path)
+            beatmap_payload = _build_beatmap_json(ai_result)
+            
+            # 4. Insert beatmap
+            beatmap = Beatmap(
+                song_id=song.id,
+                model_name="BeatmapBERT",
+                model_version="1.0",
+                difficulty_name="normal",
+                lane_count=ai_result["lane_count"],
+                offset_ms=ai_result["offset_ms"],
+                beatmap_json=json.dumps(beatmap_payload),
+                note_count=ai_result["note_count"],
+                generation_status="generated",
+            )
+            db.add(beatmap)
+            
+            # 5. Update status → done
+            song.process_status = "done"
+            await db.commit()
+            print(f"[Background] Sukses generate beatmap untuk {song.song_code}")
+
+        except Exception as e:
+            print(f"[Background] FAILED for {song.song_code}: {str(e)}")
+            song.process_status = "failed"
+            await db.commit()
 
 
 async def get_beatmap_for_song(song_code: str, db: AsyncSession) -> Optional[Beatmap]:
@@ -142,7 +166,8 @@ async def get_beatmap_for_song(song_code: str, db: AsyncSession) -> Optional[Bea
 
 async def regenerate_beatmap(song_code: str, db: AsyncSession) -> Beatmap:
     """
-    Force-regenerate beatmap for an existing song.
+    Note: For simplicity, this still runs synchronously here, 
+    but for a production app, this should also be moved to background tasks.
     """
     # Find the song
     stmt = select(Song).where(Song.song_code == song_code).where(Song.is_active == True)
@@ -160,7 +185,7 @@ async def regenerate_beatmap(song_code: str, db: AsyncSession) -> Beatmap:
         ai_result = ai_service.generate_beatmap(song.file_path)
         beatmap_payload = _build_beatmap_json(ai_result)
 
-        # Create new beatmap record (keep old for history)
+        # Create new beatmap record
         beatmap = Beatmap(
             song_id=song.id,
             model_name="BeatmapBERT",
