@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     DB_USER: str = "root"
     DB_PASSWORD: str = ""
     DB_NAME: str = "beatmap_game_db"
+    DB_SSL: bool = False
 
     # ── Storage ───────────────────────────────────────────────
     STORAGE_DIR: str = "storage/audio"
@@ -43,10 +44,13 @@ class Settings(BaseSettings):
     def DATABASE_URL_SYNC(self) -> str:
         """Sync MySQL connection string (for scripts / migrations)."""
         password_part = f":{self.DB_PASSWORD}" if self.DB_PASSWORD else ""
-        return (
+        url = (
             f"mysql+pymysql://{self.DB_USER}{password_part}"
             f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
         )
+        if self.DB_SSL:
+            url += "?ssl_verify_cert=true&ssl_verify_identity=true"
+        return url
 
     @property
     def MAX_UPLOAD_SIZE_BYTES(self) -> int:
