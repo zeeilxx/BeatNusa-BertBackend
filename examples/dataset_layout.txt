@@ -1,0 +1,2 @@
+data/raw/song_001.wav
+data/raw/song_001.mid

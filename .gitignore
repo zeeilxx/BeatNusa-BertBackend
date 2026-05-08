@@ -9,13 +9,14 @@ env/
 .env
 
 # ML/Data
-checkpoints/
+checkpoints/*
+!checkpoints/best.pt
 checkpoints_test/
 data/
 storage/
-*.json
-*.txt
-*.zip
+/*.json
+/*.txt
+/*.zip
 *.ipynb_checkpoints
 
 # IDE
