@@ -1,11 +1,12 @@
 """
 Beatmap orchestration service.
 Handles the end-to-end flow: upload → validate → store → AI → DB.
-Supports background processing to avoid timeouts on slow AI generation.
+Supports background processing in separate threads to avoid freezing the server.
 """
 
 import json
 import uuid
+import asyncio
 from typing import Optional
 
 from fastapi import UploadFile
@@ -40,30 +41,22 @@ async def upload_initial(
     3. Extract metadata (duration, BPM)
     4. Validate duration
     5. Insert song record (status = 'uploaded')
-    
-    Returns the Song ORM object to the router so it can queue the background task.
     """
-    # ── Step 1: Validate ──────────────────────────────────────
     ext = await validate_upload(file)
-
-    # ── Step 2: Save to disk ──────────────────────────────────
     stored_filename, file_path, file_format = await save_audio_file(file, ext)
 
-    # ── Step 3: Extract metadata ──────────────────────────────
     try:
         duration_seconds, bpm = extract_audio_metadata(file_path)
     except Exception as e:
         delete_audio_file(file_path)
         raise AudioValidationError(f"Gagal membaca metadata audio: {str(e)}")
 
-    # ── Step 4: Validate duration ─────────────────────────────
     try:
         validate_audio_duration(duration_seconds)
     except AudioValidationError:
         delete_audio_file(file_path)
         raise
 
-    # ── Step 5: Insert song record ────────────────────────────
     song_code = f"SONG-{uuid.uuid4().hex[:8].upper()}"
     song_title = title or (file.filename.rsplit(".", 1)[0] if file.filename else "Untitled")
 
@@ -91,37 +84,31 @@ async def upload_initial(
 
 async def process_ai_background(song_id: int):
     """
-    Step 2 of the pipeline (Asynchronous/Slow):
-    Runs in the background to avoid 502 Bad Gateway timeouts.
-    
-    1. Load song from DB
-    2. Update status → 'processing'
-    3. Run AI inference
-    4. Insert beatmap record
-    5. Update status → 'done'
+    Step 2 of the pipeline (Background Task):
+    Runs in a separate thread to prevent blocking the event loop.
     """
     async with AsyncSessionLocal() as db:
-        # 1. Load song
         stmt = select(Song).where(Song.id == song_id)
         result = await db.execute(stmt)
         song = result.scalar_one_or_none()
         
         if not song:
-            print(f"[Background] Error: Song ID {song_id} not found.")
             return
 
-        print(f"[Background] Memproses AI untuk: {song.title} ({song.song_code})")
-
-        # 2. Update status → processing
         song.process_status = "processing"
         await db.commit()
 
-        # 3. AI generation
         try:
-            ai_result = ai_service.generate_beatmap(song.file_path)
-            beatmap_payload = _build_beatmap_json(ai_result)
+            # IMPORTANT: Run the CPU-heavy AI task in a thread pool!
+            # This prevents the '502 Bad Gateway' on polling requests.
+            loop = asyncio.get_event_loop()
+            ai_result = await loop.run_in_executor(
+                None, 
+                ai_service.generate_beatmap, 
+                song.file_path
+            )
             
-            # 4. Insert beatmap
+            beatmap_payload = _build_beatmap_json(ai_result)
             beatmap = Beatmap(
                 song_id=song.id,
                 model_name="BeatmapBERT",
@@ -134,23 +121,17 @@ async def process_ai_background(song_id: int):
                 generation_status="generated",
             )
             db.add(beatmap)
-            
-            # 5. Update status → done
             song.process_status = "done"
             await db.commit()
-            print(f"[Background] Sukses generate beatmap untuk {song.song_code}")
+            print(f"[Background] Sukses: {song.song_code}")
 
         except Exception as e:
-            print(f"[Background] FAILED for {song.song_code}: {str(e)}")
+            print(f"[Background] ERROR: {str(e)}")
             song.process_status = "failed"
             await db.commit()
 
 
 async def get_beatmap_for_song(song_code: str, db: AsyncSession) -> Optional[Beatmap]:
-    """
-    Get the beatmap for a song by song_code.
-    Only returns beatmaps for songs with process_status = 'done'.
-    """
     stmt = (
         select(Beatmap)
         .join(Song, Beatmap.song_id == Song.id)
@@ -165,27 +146,21 @@ async def get_beatmap_for_song(song_code: str, db: AsyncSession) -> Optional[Bea
 
 
 async def regenerate_beatmap(song_code: str, db: AsyncSession) -> Beatmap:
-    """
-    Note: For simplicity, this still runs synchronously here, 
-    but for a production app, this should also be moved to background tasks.
-    """
-    # Find the song
     stmt = select(Song).where(Song.song_code == song_code).where(Song.is_active == True)
     result = await db.execute(stmt)
     song = result.scalar_one_or_none()
 
     if not song:
-        raise ValueError(f"Song dengan kode {song_code} tidak ditemukan.")
+        raise ValueError(f"Song {song_code} not found.")
 
-    # Update status → processing
     song.process_status = "processing"
     await db.commit()
 
     try:
-        ai_result = ai_service.generate_beatmap(song.file_path)
+        loop = asyncio.get_event_loop()
+        ai_result = await loop.run_in_executor(None, ai_service.generate_beatmap, song.file_path)
+        
         beatmap_payload = _build_beatmap_json(ai_result)
-
-        # Create new beatmap record
         beatmap = Beatmap(
             song_id=song.id,
             model_name="BeatmapBERT",
@@ -202,17 +177,13 @@ async def regenerate_beatmap(song_code: str, db: AsyncSession) -> Beatmap:
         await db.commit()
         await db.refresh(beatmap)
         return beatmap
-
     except Exception as e:
         song.process_status = "failed"
         await db.commit()
-        raise RuntimeError(f"Regenerasi beatmap gagal: {str(e)}")
+        raise RuntimeError(str(e))
 
 
 def _build_beatmap_json(ai_result: dict) -> dict:
-    """
-    Build the beatmap JSON payload in the format expected by Unity.
-    """
     return {
         "lane_count": ai_result["lane_count"],
         "offset_ms": ai_result["offset_ms"],
