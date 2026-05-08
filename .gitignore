@@ -16,6 +16,7 @@ data/
 storage/
 /*.json
 /*.txt
+!requirements.txt
 /*.zip
 *.ipynb_checkpoints
 
