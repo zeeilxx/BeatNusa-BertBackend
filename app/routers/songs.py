@@ -25,7 +25,7 @@ router = APIRouter(prefix="/api/songs", tags=["Songs"])
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # POST /api/songs/upload
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Pas upload song
 @router.post("/upload", response_model=SongUploadResponse, status_code=202)
 async def upload_song(
     background_tasks: BackgroundTasks,
@@ -73,10 +73,11 @@ async def upload_song(
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # GET /api/songs
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# songlist scene
 @router.get("", response_model=List[SongListItem])
 async def list_songs(
     status: Optional[str] = None,
+    # fastapi function to get database connection
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -99,25 +100,25 @@ async def list_songs(
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # GET /api/songs/{song_code}
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-@router.get("/{song_code}", response_model=SongDetail)
-async def get_song(
-    song_code: str,
-    db: AsyncSession = Depends(get_db),
-):
-    """Get full song details by song_code."""
-    stmt = select(Song).where(Song.song_code == song_code)
-    result = await db.execute(stmt)
-    song = result.scalar_one_or_none()
+# @router.get("/{song_code}", response_model=SongDetail)
+# async def get_song(
+#     song_code: str,
+#     db: AsyncSession = Depends(get_db),
+# ):
+#     """Get full song details by song_code."""
+#     stmt = select(Song).where(Song.song_code == song_code)
+#     result = await db.execute(stmt)
+#     song = result.scalar_one_or_none()
 
-    if not song:
-        raise HTTPException(status_code=404, detail=f"Song {song_code} tidak ditemukan.")
+#     if not song:
+#         raise HTTPException(status_code=404, detail=f"Song {song_code} tidak ditemukan.")
 
-    return SongDetail.model_validate(song)
+#     return SongDetail.model_validate(song)
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # GET /api/songs/{song_code}/status
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# as upload song ngecek statusnya
 @router.get("/{song_code}/status", response_model=SongStatusResponse)
 async def get_song_status(
     song_code: str,

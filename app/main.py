@@ -23,9 +23,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # LIFESPAN — startup / shutdown logic
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -65,9 +63,7 @@ async def lifespan(app: FastAPI):
     print("[Shutdown] BeatmapBERT Backend stopped.")
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # APP CREATION
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app = FastAPI(
     title="BeatmapBERT AI Backend",
     description="Backend API untuk rhythm game WebGL — upload audio, generate beatmap, simpan gameplay result.",
@@ -76,9 +72,7 @@ app = FastAPI(
 )
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # CORS — allow Unity WebGL
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.add_middleware(
     CORSMiddleware,
     # Untuk produksi, ganti "*" dengan domain Unity WebGL Anda
@@ -89,9 +83,7 @@ app.add_middleware(
 )
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # ROUTERS
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 from app.routers import songs, beatmaps, game_results
 
 app.include_router(songs.router)
@@ -99,9 +91,7 @@ app.include_router(beatmaps.router)
 app.include_router(game_results.router)
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # HEALTH CHECK
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 @app.get("/", tags=["Health"])
 def health_check():
     """Simple health check endpoint."""
