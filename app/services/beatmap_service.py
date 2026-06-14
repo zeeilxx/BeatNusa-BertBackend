@@ -43,9 +43,11 @@ async def upload_initial(
     5. Insert song record (status = 'uploaded')
     """
     ext = await validate_upload(file)
+    # validasi audio, taro di hard disk device
     stored_filename, file_path, file_format = await save_audio_file(file, ext)
 
     try:
+        # Durasi sama metadata di ekstrak
         duration_seconds, bpm = extract_audio_metadata(file_path)
     except Exception as e:
         delete_audio_file(file_path)
@@ -81,7 +83,7 @@ async def upload_initial(
     
     return song
 
-
+# fungsi ngirim ke model buat proses lagu, lanjut ke ai_service
 async def process_ai_background(song_id: int):
     """
     Step 2 of the pipeline (Background Task):
@@ -108,6 +110,7 @@ async def process_ai_background(song_id: int):
                 song.file_path
             )
             
+            # beatmap yang udah jadi dari ai diambil sini, terus dibikin json biar bisa dibaca unity masuk db
             beatmap_payload = _build_beatmap_json(ai_result)
             beatmap = Beatmap(
                 song_id=song.id,

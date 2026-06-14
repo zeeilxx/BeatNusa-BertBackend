@@ -62,6 +62,7 @@ class AIService:
     def is_loaded(self) -> bool:
         return self._loaded
 
+# request masuk kesini
     def generate_beatmap(self, audio_path: str) -> Dict:
         """
         Generate a beatmap from an audio file using the loaded model.
@@ -83,6 +84,7 @@ class AIService:
         # (avoid predict_song which reloads the checkpoint each time)
         return self._direct_inference(audio_path)
 
+#buat masuk ke inference model
     def _direct_inference(self, audio_path: str) -> Dict:
         """
         Run inference directly using the already-loaded model
@@ -90,7 +92,7 @@ class AIService:
         """
         import numpy as np
 
-        # Extract audio features
+        # musik dipecah jadi mel spectogram, nyuruh model. Lanjut ke inference predictor
         feats = extract_audio_features(audio_path, self.cfg)
         mel = feats.mel
         f_ms = frame_times_ms(mel.shape[1], self.cfg)
@@ -105,6 +107,7 @@ class AIService:
         threshold = self.cfg["postprocess"]["event_threshold"]
         raw_events: List[Dict] = []
         idxs = np.where(event_prob >= threshold)[0]
+        # output mentah yang keluar dari inference model
         for idx in idxs:
             raw_events.append({
                 "time_ms": float(f_ms[idx]),
@@ -112,12 +115,12 @@ class AIService:
                 "confidence": float(event_prob[idx]),
             })
 
-        # Post-processing (snap to beats/onsets, density limiting)
+        # Post-processing (rapihin output model biar cocok buat unity)
         final_events = postprocess_events(
             raw_events, feats.onset_times_ms, feats.beat_times_ms, self.cfg
         )
 
-        # Build Unity-compatible notes
+        # hasil akhir ai_service yang nanti dikirim keunity
         notes = [
             {
                 "time_ms": int(round(e["time_ms"])),
@@ -129,7 +132,7 @@ class AIService:
         ]
 
         lane_count = int(self.cfg["model"]["num_lanes"])
-
+        # format output yang dibaca unity, diambil sama beatmap service masuk db
         return {
             "bpm": feats.bpm,
             "duration_ms": feats.duration_ms,

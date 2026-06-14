@@ -75,7 +75,6 @@ app = FastAPI(
 # CORS — allow Unity WebGL
 app.add_middleware(
     CORSMiddleware,
-    # Untuk produksi, ganti "*" dengan domain Unity WebGL Anda
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
