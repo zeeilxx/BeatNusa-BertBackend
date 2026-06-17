@@ -37,7 +37,7 @@ async def lifespan(app: FastAPI):
     print("=" * 60)
 
     # 1. Create database tables
-    # Import models so Base.metadata knows about them
+    # Import models
     import app.models  # noqa: F401
     await create_tables()
     print("[Startup] Database tables sudah siap.")

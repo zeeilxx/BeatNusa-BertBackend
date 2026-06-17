@@ -19,7 +19,7 @@ def load_checkpoint_model(checkpoint_path: str | Path, cfg: Dict, device: torch.
     model.eval()
     return model
 
-
+# mel spectogram masuk sini pas post lagu
 def _run_chunked_inference(model: BeatmapModel, mel: np.ndarray, cfg: Dict, device: torch.device):
     total_frames = mel.shape[1]
     chunk = int(cfg['inference']['chunk_frames'])
@@ -31,6 +31,7 @@ def _run_chunked_inference(model: BeatmapModel, mel: np.ndarray, cfg: Dict, devi
     lane_accum = np.zeros((total_frames, cfg['model']['num_lanes']), dtype=np.float32)
 
     with torch.no_grad():
+        # 20frame @ 40ms = 800ms = 0.8detik, dipotong2 kecil biar pas di GPU
         for start in range(0, total_frames, step):
             end = min(total_frames, start + chunk)
             piece = mel[:, start:end]
@@ -43,6 +44,7 @@ def _run_chunked_inference(model: BeatmapModel, mel: np.ndarray, cfg: Dict, devi
 
             x = torch.from_numpy(piece).unsqueeze(0).to(device)
             mask = torch.from_numpy(mask_np).unsqueeze(0).to(device)
+            # PyTorch menganalisis potongan audio buat prediksi letak nada
             outputs = model(x, mask)
             event_prob = torch.sigmoid(outputs['event_logits']).squeeze(0).cpu().numpy()[:valid_len]
             lane_prob = torch.softmax(outputs['lane_logits'], dim=-1).squeeze(0).cpu().numpy()[:valid_len]
@@ -52,12 +54,12 @@ def _run_chunked_inference(model: BeatmapModel, mel: np.ndarray, cfg: Dict, devi
             lane_accum[start:end] += lane_prob
             if end == total_frames:
                 break
-
+# hasil output model berupa probabilitas kejadian
     count_accum = np.clip(count_accum, 1e-6, None)
     event_prob = event_accum / count_accum
     lane_prob = lane_accum / count_accum[:, None]
     return event_prob, lane_prob
-
+#udah dapet, balik ke ai_service
 
 def predict_song(audio_path: str | Path, checkpoint_path: str | Path, cfg: Dict, output_json_path: str | Path | None = None) -> Dict:
     device = torch.device('cuda' if torch.cuda.is_available() and cfg['general']['device'] != 'cpu' else 'cpu')

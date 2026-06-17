@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     MODEL_CONFIG: str = "configs/local.yaml"
 
     # ── Upload Limits ─────────────────────────────────────────
-    MAX_UPLOAD_SIZE_MB: int = 50
+    MAX_UPLOAD_SIZE_MB: int = 10
     MAX_AUDIO_DURATION_SECONDS: int = 600  # 10 minutes
 
     @property

@@ -40,7 +40,6 @@ async def validate_upload(file: UploadFile) -> str:
         )
 
     # Check file size by reading content length hint
-    # We'll do definitive size check after saving
     if file.size and file.size > settings.MAX_UPLOAD_SIZE_BYTES:
         raise AudioValidationError(
             f"Ukuran file melebihi batas maksimum {settings.MAX_UPLOAD_SIZE_MB} MB."

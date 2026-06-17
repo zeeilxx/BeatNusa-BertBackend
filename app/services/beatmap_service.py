@@ -102,7 +102,6 @@ async def process_ai_background(song_id: int):
 
         try:
             # IMPORTANT: Run the CPU-heavy AI task in a thread pool!
-            # This prevents the '502 Bad Gateway' on polling requests.
             loop = asyncio.get_event_loop()
             ai_result = await loop.run_in_executor(
                 None, 
@@ -119,6 +118,7 @@ async def process_ai_background(song_id: int):
                 difficulty_name="normal",
                 lane_count=ai_result["lane_count"],
                 offset_ms=ai_result["offset_ms"],
+                # jadiin json
                 beatmap_json=json.dumps(beatmap_payload),
                 note_count=ai_result["note_count"],
                 generation_status="generated",

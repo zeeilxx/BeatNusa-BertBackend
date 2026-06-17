@@ -80,8 +80,6 @@ class AIService:
         if not self._loaded:
             raise RuntimeError("AI model belum dimuat. Panggil load_model() terlebih dahulu.")
 
-        # Run inference directly using the already-loaded model
-        # (avoid predict_song which reloads the checkpoint each time)
         return self._direct_inference(audio_path)
 
 #buat masuk ke inference model
