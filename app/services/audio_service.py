@@ -51,22 +51,18 @@ async def validate_upload(file: UploadFile) -> str:
 async def save_audio_file(file: UploadFile, ext: str) -> Tuple[str, str, str]:
     """
     Save the uploaded audio to storage directory.
-
-    Returns:
-        (stored_filename, file_path, file_format)
-        - stored_filename: UUID-based filename (e.g. 'abc123.mp3')
-        - file_path: relative path from project root (e.g. 'storage/audio/abc123.mp3')
-        - file_format: extension without dot (e.g. 'mp3')
+    If the file is not a WAV, transcode it to WAV to prevent
+    parsing/FMOD compatibility errors on both backend and frontend.
     """
     # Ensure storage directory exists
     storage_path = settings.STORAGE_PATH
     storage_path.mkdir(parents=True, exist_ok=True)
 
-    # Generate unique filename
-    stored_filename = f"{uuid.uuid4().hex}{ext}"
-    file_path = storage_path / stored_filename
+    # Temporary unique filename for saving raw upload
+    temp_filename = f"temp_{uuid.uuid4().hex}{ext}"
+    temp_file_path = storage_path / temp_filename
 
-    # Save file to disk
+    # Save raw upload to disk
     content = await file.read()
 
     # Definitive size check after reading
@@ -75,10 +71,48 @@ async def save_audio_file(file: UploadFile, ext: str) -> Tuple[str, str, str]:
             f"Ukuran file melebihi batas maksimum {settings.MAX_UPLOAD_SIZE_MB} MB."
         )
 
-    async with aiofiles.open(file_path, "wb") as f:
+    async with aiofiles.open(temp_file_path, "wb") as f:
         await f.write(content)
 
-    file_format = ext.lstrip(".")
+    file_format = ext.lstrip(".").lower()
+
+    if file_format != "wav":
+        # Transcode to WAV
+        target_filename = f"{uuid.uuid4().hex}.wav"
+        target_file_path = storage_path / target_filename
+        try:
+            import librosa
+            import soundfile as sf
+            # Load with native samplerate and channels
+            y, sr = librosa.load(str(temp_file_path), sr=None, mono=False)
+            # Write to WAV
+            sf.write(str(target_file_path), y.T, sr, subtype='PCM_16')
+
+            # Delete temp raw file
+            if temp_file_path.exists():
+                temp_file_path.unlink()
+
+            stored_filename = target_filename
+            file_path = target_file_path
+            file_format = "wav"
+            print(f"[AudioService] Transcoded upload {file.filename} ({ext}) to clean WAV: {stored_filename}")
+        except Exception as e:
+            # Fallback to saving original if transcoding fails
+            if target_file_path.exists():
+                target_file_path.unlink()
+            # Rename temp to original target
+            stored_filename = f"{uuid.uuid4().hex}{ext}"
+            file_path = storage_path / stored_filename
+            temp_file_path.rename(file_path)
+            file_format = ext.lstrip(".")
+            print(f"[AudioService] Warning: Failed to transcode, fallback to raw: {e}")
+    else:
+        # Already WAV, just rename temp to original target
+        stored_filename = f"{uuid.uuid4().hex}.wav"
+        file_path = storage_path / stored_filename
+        temp_file_path.rename(file_path)
+        file_format = "wav"
+
     return stored_filename, str(file_path), file_format
 
 
