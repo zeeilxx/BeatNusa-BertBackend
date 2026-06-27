@@ -114,7 +114,7 @@ async def process_ai_background(song_id: int):
             beatmap = Beatmap(
                 song_id=song.id,
                 model_name="BeatmapBERT",
-                model_version="1.0",
+                model_version=ai_service.model_version,
                 difficulty_name="normal",
                 lane_count=ai_result["lane_count"],
                 offset_ms=ai_result["offset_ms"],
@@ -167,7 +167,7 @@ async def regenerate_beatmap(song_code: str, db: AsyncSession) -> Beatmap:
         beatmap = Beatmap(
             song_id=song.id,
             model_name="BeatmapBERT",
-            model_version="1.0",
+            model_version=ai_service.model_version,
             difficulty_name="normal",
             lane_count=ai_result["lane_count"],
             offset_ms=ai_result["offset_ms"],

@@ -35,6 +35,7 @@ class AIService:
         self.device: torch.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         )
+        self.model_version: str = "1.0"
         self._loaded = False
 
     def load_model(self, config_path: str, checkpoint_path: str) -> None:
@@ -44,6 +45,7 @@ class AIService:
         """
         print(f"[AI Service] Memuat konfigurasi dari {config_path}...")
         self.cfg = load_config(config_path)
+        self.model_version = str(self.cfg.get("model_version", "1.0"))
 
         print(f"[AI Service] Menginisialisasi model BeatmapBERT...")
         self.model = BeatmapModel(self.cfg).to(self.device)
