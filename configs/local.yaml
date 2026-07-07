@@ -62,7 +62,7 @@ train:
   seed: 42
   batch_size: 16
   num_workers: 2
-  epochs: 30
+  epochs: 40
   lr: 0.0003
   weight_decay: 0.02
   warmup_epochs: 5
@@ -78,14 +78,14 @@ train:
   grad_clip: 1.0
   label_smoothing: 0.05 # Tetap → prediksi tajam
   use_focal_loss: true
-  focal_alpha: 0.65 # BALANCED: sweet spot antara recall (0.80) dan precision (0.50)
-  focal_gamma: 2.0 # Revert ke 2.0 → gamma 3.0 terlalu membunuh recall
+  focal_alpha: 0.65 # BALANCED: sweet spot antara recall (0.80) dan precision (0.50), ini buat nyari beat/recall kalo tinggi.
+  focal_gamma: 2.0 # Revert ke 2.0 → gamma 3.0 terlalu membunuh recall, ini kalo tinggi bisa naikin precision tapi menurunkan recall.
 
 eval:
   event_threshold: 0.42 # BALANCED: sweet spot antara 0.35 dan 0.50
 
 postprocess:
-  event_threshold: 0.60 # EASY MODE: naikkan dari 0.42 → hanya note confidence tinggi yang lolos
+  event_threshold: 0.60 #naik dari 0.42 → hanya note confidence tinggi yang lolos
   min_gap_ms: 200 # EASY MODE: naikkan dari 95 → note lebih renggang
   same_lane_min_gap_ms: 250 # EASY MODE: naikkan dari 130 → lebih mudah di lane yang sama
   snap_to_onsets: true

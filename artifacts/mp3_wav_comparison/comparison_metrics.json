@@ -1,0 +1,406 @@
+{
+  "environment": {
+    "datetime": "2026-07-03 16:12:23",
+    "os": "Windows 10 10.0.26200",
+    "cpu": "12th Gen Intel(R) Core(TM) i5-12500H",
+    "gpu": "NVIDIA GeForce RTX 3050 Laptop GPU",
+    "cuda_available": true,
+    "cuda_version": "12.1",
+    "device_used": "cuda",
+    "python_version": "3.11.0rc2 (main, Sep 11 2022, 20:22:52) [MSC v.1933 64 bit (AMD64)]",
+    "pytorch_version": "2.5.1+cu121",
+    "librosa_version": "0.11.0",
+    "checkpoint_path": "D:\\Tugas\\Semester 7\\Skripsi\\beatmap_bert_project_real - Copy\\checkpoints\\best.pt",
+    "config_path": "D:\\Tugas\\Semester 7\\Skripsi\\beatmap_bert_project_real - Copy\\configs\\local.yaml",
+    "checkpoint_epoch": 30,
+    "num_runs": 3
+  },
+  "input_files": {
+    "mp3": {
+      "filename": "soleramlagudaerahriaubyviolamerliaqdaaf.mp3",
+      "format": "MP3",
+      "size_bytes": 1984773,
+      "size_mb": 1.8928,
+      "channels": 2,
+      "sample_rate": 48000,
+      "duration_seconds": 107.29941666666667,
+      "codec": "MP3",
+      "bit_depth": "tidak tersedia (MP3)",
+      "bitrate_kbps": 148
+    },
+    "wav": {
+      "filename": "soleramlagudaerahriaubyviolamerliaqdaaf.wav",
+      "format": "WAV",
+      "size_bytes": 20601566,
+      "size_mb": 19.6472,
+      "duration_seconds": 107.29941666666667,
+      "sample_rate": 48000,
+      "channels": 2,
+      "codec": "PCM_16",
+      "bitrate_kbps": "tidak tersedia (WAV)",
+      "bit_depth": "PCM_16"
+    }
+  },
+  "validation": {
+    "mp3": {
+      "extension": ".mp3",
+      "is_allowed_format": true,
+      "file_size_bytes": 1984773,
+      "max_upload_bytes": 10485760,
+      "size_within_limit": true,
+      "validation_passed": true
+    },
+    "wav": {
+      "extension": ".wav",
+      "is_allowed_format": true,
+      "file_size_bytes": 20601566,
+      "max_upload_bytes": 10485760,
+      "size_within_limit": false,
+      "validation_passed": false
+    }
+  },
+  "backend_handling": {
+    "mp3": {
+      "original_format": "mp3",
+      "transcoded": true,
+      "transcoded_format": "wav",
+      "transcoded_path": "C:\\Users\\hp\\AppData\\Local\\Temp\\beatnusa_cmp_gi_yx28x\\soleramlagudaerahriaubyviolamerliaqdaaf_transcoded.wav",
+      "transcoded_size_bytes": 20601532,
+      "transcoding_time_s": 0.17871020000075077,
+      "before_sr": 48000,
+      "before_channels": 2,
+      "after_sr": 48000,
+      "after_channels": 2,
+      "after_subtype": "PCM_16"
+    },
+    "wav": {
+      "original_format": "wav",
+      "transcoded": false,
+      "transcoded_path": "C:\\Users\\hp\\AppData\\Local\\Temp\\beatnusa_cmp_gi_yx28x\\backend_soleramlagudaerahriaubyviolamerliaqdaaf.wav",
+      "handling_time_s": 0.012463600000046426,
+      "note": "File sudah WAV, hanya di-copy (rename di backend asli)",
+      "after_sr": 48000,
+      "after_channels": 2,
+      "after_subtype": "PCM_16"
+    }
+  },
+  "timing": {
+    "mp3": {
+      "audio_load_s": {
+        "mean": 0.1575218333337034,
+        "std": 0.021900472466921554,
+        "min": 0.1418870000006791,
+        "max": 0.18849330000011832
+      },
+      "mel_spectrogram_s": {
+        "mean": 0.28422310000011447,
+        "std": 0.010075515407179684,
+        "min": 0.275638600000093,
+        "max": 0.2983643999996275
+      },
+      "rhythm_guides_s": {
+        "mean": 0.7798836000001756,
+        "std": 0.05143997018253552,
+        "min": 0.7082665000007182,
+        "max": 0.8267532999998366
+      },
+      "preprocessing_total_s": {
+        "mean": 1.2216285333339936,
+        "std": 0.07659628293601925,
+        "min": 1.126090300001124,
+        "max": 1.3136109999995824
+      },
+      "inference_s": {
+        "mean": 0.12846299999970748,
+        "std": 0.0010668034617803209,
+        "min": 0.12761919999957172,
+        "max": 0.12996799999928044
+      },
+      "postprocessing_s": {
+        "mean": 0.0027720999996745377,
+        "std": 0.00032226722872091184,
+        "min": 0.002403599999524886,
+        "max": 0.0031885999997030012
+      },
+      "beatmap_json_build_s": {
+        "mean": 6.189999961255428e-05,
+        "std": 6.7985293237308784e-06,
+        "min": 5.429999964690069e-05,
+        "max": 7.079999977577245e-05
+      },
+      "pipeline_total_s": {
+        "mean": 1.3570112666672383,
+        "std": 0.076969011630752,
+        "min": 1.2604121000003943,
+        "max": 1.4487596000008125
+      }
+    },
+    "wav": {
+      "audio_load_s": {
+        "mean": 0.1277519999997215,
+        "std": 0.006727094196711606,
+        "min": 0.11929279999912978,
+        "max": 0.13575149999996938
+      },
+      "mel_spectrogram_s": {
+        "mean": 0.2654847333333237,
+        "std": 0.02332042120290248,
+        "min": 0.24134109999977227,
+        "max": 0.2970136000003549
+      },
+      "rhythm_guides_s": {
+        "mean": 0.7393138000000666,
+        "std": 0.009296936193418402,
+        "min": 0.7324524000005113,
+        "max": 0.752457399999912
+      },
+      "preprocessing_total_s": {
+        "mean": 1.1325505333331118,
+        "std": 0.03875653065401224,
+        "min": 1.0930862999994133,
+        "max": 1.1852225000002363
+      },
+      "inference_s": {
+        "mean": 0.1279611666668643,
+        "std": 0.00039542915354509026,
+        "min": 0.12744350000048144,
+        "max": 0.1284032000003208
+      },
+      "postprocessing_s": {
+        "mean": 0.0030890666666891775,
+        "std": 0.0002934177034522522,
+        "min": 0.0027314000008118455,
+        "max": 0.0034501000000091153
+      },
+      "beatmap_json_build_s": {
+        "mean": 8.306666677526664e-05,
+        "std": 9.289899120712342e-06,
+        "min": 7.619999996677507e-05,
+        "max": 9.620000037102727e-05
+      },
+      "pipeline_total_s": {
+        "mean": 1.2678902666669576,
+        "std": 0.03855069402025297,
+        "min": 1.2287937000000966,
+        "max": 1.3203449000002365
+      }
+    }
+  },
+  "preprocessing": {
+    "mp3": {
+      "waveform_sr": 22050,
+      "waveform_channels": 1,
+      "waveform_samples": 2365953,
+      "waveform_duration_s": 107.29945578231292,
+      "mel_shape": [
+        128,
+        9243
+      ],
+      "mel_time_frames": 9243,
+      "mel_pre_norm_mean": -39.23176193237305,
+      "mel_pre_norm_std": 13.019136428833008,
+      "mel_min_pre_norm": -80.0,
+      "mel_max_pre_norm": 0.0,
+      "mel_post_norm_mean": -2.6413569997885133e-08,
+      "mel_post_norm_std": 1.0,
+      "mel_min_post_norm": -3.13140869140625,
+      "mel_max_post_norm": 3.0133919715881348,
+      "num_onsets": 370,
+      "num_beats": 177,
+      "bpm": 105.46875
+    },
+    "wav": {
+      "waveform_sr": 22050,
+      "waveform_channels": 1,
+      "waveform_samples": 2365953,
+      "waveform_duration_s": 107.29945578231292,
+      "mel_shape": [
+        128,
+        9243
+      ],
+      "mel_time_frames": 9243,
+      "mel_pre_norm_mean": -39.208343505859375,
+      "mel_pre_norm_std": 13.025228500366211,
+      "mel_min_pre_norm": -80.0,
+      "mel_max_pre_norm": 0.0,
+      "mel_post_norm_mean": -5.282713999577027e-08,
+      "mel_post_norm_std": 0.9999999403953552,
+      "mel_min_post_norm": -3.131742000579834,
+      "mel_max_post_norm": 3.0101847648620605,
+      "num_onsets": 370,
+      "num_beats": 177,
+      "bpm": 105.46875
+    },
+    "spectrogram_similarity": {
+      "frames_compared": 9243,
+      "frames_mp3": 9243,
+      "frames_wav": 9243,
+      "extra_frames_mp3": 0,
+      "extra_frames_wav": 0,
+      "mae": 0.013638551346957684,
+      "rmse": 0.02082808129489422,
+      "pearson_correlation": 0.9997767806053162,
+      "cosine_similarity": 0.9997784495353699
+    }
+  },
+  "raw_predictions": {
+    "mp3": {
+      "pred_frames": 9243,
+      "event_prob_min": 0.035390060395002365,
+      "event_prob_max": 0.8057052493095398,
+      "event_prob_mean": 0.22995738685131073,
+      "event_prob_std": 0.13378481566905975,
+      "frames_above_eval_threshold": 879,
+      "frames_above_pp_threshold": 291,
+      "lane_distribution_pre_pp": {
+        "0": 15,
+        "1": 237,
+        "2": 38,
+        "3": 1
+      },
+      "num_candidates_pre_pp": 291
+    },
+    "wav": {
+      "pred_frames": 9243,
+      "event_prob_min": 0.035224270075559616,
+      "event_prob_max": 0.805025041103363,
+      "event_prob_mean": 0.23007862269878387,
+      "event_prob_std": 0.13376793265342712,
+      "frames_above_eval_threshold": 874,
+      "frames_above_pp_threshold": 291,
+      "lane_distribution_pre_pp": {
+        "0": 17,
+        "1": 234,
+        "2": 39,
+        "3": 1
+      },
+      "num_candidates_pre_pp": 291
+    }
+  },
+  "postprocessing": {
+    "mp3": {
+      "pp_event_threshold": 0.6,
+      "pp_min_gap_ms": 200,
+      "pp_same_lane_min_gap_ms": 250,
+      "pp_onset_snap_tolerance_ms": 30,
+      "pp_beat_snap_tolerance_ms": 40,
+      "pp_max_density_nps": 3,
+      "num_candidates_pre_pp": 291,
+      "num_notes_after_pp": 216,
+      "notes_removed": 75,
+      "notes_removed_pct": 25.77
+    },
+    "wav": {
+      "pp_event_threshold": 0.6,
+      "pp_min_gap_ms": 200,
+      "pp_same_lane_min_gap_ms": 250,
+      "pp_onset_snap_tolerance_ms": 30,
+      "pp_beat_snap_tolerance_ms": 40,
+      "pp_max_density_nps": 3,
+      "num_candidates_pre_pp": 291,
+      "num_notes_after_pp": 216,
+      "notes_removed": 75,
+      "notes_removed_pct": 25.77
+    }
+  },
+  "beatmap": {
+    "mp3": {
+      "beatmap_duration_ms": 107299.45578231291,
+      "note_density_per_s": 2.0131,
+      "lane_counts": {
+        "0": 14,
+        "1": 174,
+        "2": 27,
+        "3": 1
+      },
+      "beatmap_json_size_bytes": 13494,
+      "beatmap_success": true
+    },
+    "wav": {
+      "beatmap_duration_ms": 107299.45578231291,
+      "note_density_per_s": 2.0131,
+      "lane_counts": {
+        "0": 16,
+        "1": 175,
+        "2": 24,
+        "3": 1
+      },
+      "beatmap_json_size_bytes": 13494,
+      "beatmap_success": true
+    }
+  },
+  "beatmap_similarity": {
+    "time_only_25ms": {
+      "tolerance_ms": 25,
+      "require_same_lane": false,
+      "num_matched": 209,
+      "num_unmatched_a": 7,
+      "num_unmatched_b": 7,
+      "mean_dt_ms": 0.11483253588516747,
+      "median_dt_ms": 0.0,
+      "max_dt_ms": 24.0
+    },
+    "time_and_lane_25ms": {
+      "tolerance_ms": 25,
+      "require_same_lane": true,
+      "num_matched": 206,
+      "num_unmatched_a": 10,
+      "num_unmatched_b": 10,
+      "mean_dt_ms": 0.11650485436893204,
+      "median_dt_ms": 0.0,
+      "max_dt_ms": 24.0
+    },
+    "time_only_50ms": {
+      "tolerance_ms": 50,
+      "require_same_lane": false,
+      "num_matched": 210,
+      "num_unmatched_a": 6,
+      "num_unmatched_b": 6,
+      "mean_dt_ms": 0.28095238095238095,
+      "median_dt_ms": 0.0,
+      "max_dt_ms": 35.0
+    },
+    "time_and_lane_50ms": {
+      "tolerance_ms": 50,
+      "require_same_lane": true,
+      "num_matched": 207,
+      "num_unmatched_a": 9,
+      "num_unmatched_b": 9,
+      "mean_dt_ms": 0.28502415458937197,
+      "median_dt_ms": 0.0,
+      "max_dt_ms": 35.0
+    },
+    "time_only_100ms": {
+      "tolerance_ms": 100,
+      "require_same_lane": false,
+      "num_matched": 210,
+      "num_unmatched_a": 6,
+      "num_unmatched_b": 6,
+      "mean_dt_ms": 0.28095238095238095,
+      "median_dt_ms": 0.0,
+      "max_dt_ms": 35.0
+    },
+    "time_and_lane_100ms": {
+      "tolerance_ms": 100,
+      "require_same_lane": true,
+      "num_matched": 207,
+      "num_unmatched_a": 9,
+      "num_unmatched_b": 9,
+      "mean_dt_ms": 0.28502415458937197,
+      "median_dt_ms": 0.0,
+      "max_dt_ms": 35.0
+    }
+  },
+  "determinism": {
+    "mp3_note_count_consistent": true,
+    "wav_note_count_consistent": true,
+    "mp3_timestamps_consistent": true,
+    "wav_timestamps_consistent": true,
+    "mp3_lanes_consistent": true,
+    "wav_lanes_consistent": true,
+    "issues": ""
+  },
+  "warnings": [
+    "File WAV (19.6472 MB) melebihi batas upload backend (10 MB). Pengujian tetap dilanjutkan untuk perbandingan pipeline."
+  ]
+}

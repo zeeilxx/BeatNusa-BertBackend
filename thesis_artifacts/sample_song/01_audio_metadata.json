@@ -1,0 +1,11 @@
+{
+  "song_name": "malumalu.wav",
+  "sample_rate": 22050,
+  "mono": true,
+  "duration_seconds": 205.58947845804988,
+  "duration_ms": 205589.47845804988,
+  "num_frames": 17709,
+  "bpm": 107.666015625,
+  "detected_onsets_count": 676,
+  "detected_beats_count": 369
+}

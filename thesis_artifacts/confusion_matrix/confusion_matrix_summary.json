@@ -1,0 +1,32 @@
+{
+  "threshold": 0.42,
+  "checkpoint_epoch": 30,
+  "validation": {
+    "total_frames": 7822848,
+    "confusion_matrix": {
+      "TP": 626931,
+      "FP": 483542,
+      "FN": 105512,
+      "TN": 6606863
+    },
+    "metrics": {
+      "precision": 0.564562,
+      "recall": 0.855945,
+      "f1": 0.680369
+    }
+  },
+  "test": {
+    "total_frames": 7927552,
+    "confusion_matrix": {
+      "TP": 624932,
+      "FP": 483239,
+      "FN": 104330,
+      "TN": 6715051
+    },
+    "metrics": {
+      "precision": 0.563931,
+      "recall": 0.856938,
+      "f1": 0.680223
+    }
+  }
+}

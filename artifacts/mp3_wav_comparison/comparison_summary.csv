@@ -1,0 +1,12 @@
+metric,mp3,wav,difference,difference_percentage,unit,notes
+file_size,1984773,20601566,-18616793,-90.37,bytes,
+duration_seconds,107.2994,107.2994,0.000000,,seconds,
+pipeline_total_avg,1.357011,1.267890,0.089121,7.03,seconds,rata-rata
+num_notes,216,216,0,0.0,count,
+spec_pearson,0.9997767806053162,,,,,
+spec_mae,0.013638551346957684,,,,,
+spec_rmse,0.02082808129489422,,,,,
+spec_cosine_sim,0.9997784495353699,,,,,
+matched_notes_50ms_time,210,,,,count,
+matched_notes_50ms_time_lane,207,,,,count,
+bpm,105.46875,105.46875,0.0,,bpm,

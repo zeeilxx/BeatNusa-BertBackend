@@ -72,7 +72,7 @@ app = FastAPI(
 )
 
 
-# CORS — allow Unity WebGL
+# CORS — allow Unity WebGL untuk hosting.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
